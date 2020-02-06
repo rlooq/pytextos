@@ -1,7 +1,14 @@
+"""
+Text objects created from text files, so certain information can be extracted 
+from them: title, tokens, word counts, number of paragraphs, reading time, frequency, etc.
+To-dos: refine tokenization, streamline workflow (scraping->text object->formatting and exporting / persistence in db?)
+Issues: tokenization not perfect, how to implement vocabulary, required formatting for scraped text files
+"""
+
 # Standard library imports to be used in methods
 import string
 from statistics import mean # to calculate avg word length
-from collections import Counter
+from collections import Counter # for frequency distributions
 from . stopwords import ENGLISH_STOPS, KNOWN_VOCABULARY
 
 # Definition of Text class
@@ -42,7 +49,7 @@ class Text:
             print("There was a problem.")
 
     def __repr__(self):
-        return f'<Text \'{self.title}, by {self.by}, {self.date}>'
+        return f'<Text \'{self.title} by {self.by} ({self.date})>'
 
     def __getitem__(self, i):
         return self.body[i]
@@ -56,21 +63,21 @@ class Text:
         """
         # Remove punctuation and curly quotes with a maketrans() translation table
         words = []
-        trans_table=str.maketrans('','',string.punctuation+"\u201c\u201d\u2018\u2019")
+        trans_table=str.maketrans('','',string.punctuation+"\u201c\u201d\u2018\u2019_–")
         for sent in self.body:
             words.extend(sent.strip().split())
         return [w.translate(trans_table) for w in words]
 
-    def word_count(self):
+    def wc(self):
         '''Returns number of words (int)'''
         return sum([len(para.split()) for para in self.body]) #not using tokenize: contractions!
 
     def reading_time(self):
         '''Returns reading time in rounded number of minutes (int) '''
-        return round(self.word_count()/265)
+        return round(self.wc()/265)
 
     def avg_word_len(self):
-        return mean([len(w) for w in self.tokenize()])
+        return round(mean([len(w) for w in self.tokenize()]))
 
     def lexical_diversity(self):
         return len(set(self.tokenize()))/len(self.tokenize())

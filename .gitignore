@@ -1,5 +1,4 @@
 __pycache__
-boyle.txt
-test3.txt
+/tests/*.txt
 .vscode/*
 *.pyc
