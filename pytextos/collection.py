@@ -27,11 +27,37 @@ class Collection:
         return self._members[i]
 
     def to_csv(self, filename):
-        with open(filename, "w", encoding="utf-8") as csvfile: 
-           collection_writer=csv.writer(csvfile, quotechar='"', quoting=csv.QUOTE_MINIMAL)
-           headers=['Title', 'Author', 'Date', 'Wordcount', 'LexDiv', 'Avg_Word_Len', 'Read_Time', 'Keywords']
-           collection_writer.writerow(headers)
-           for t in self._members:
-               collection_writer.writerow(
-                   [t.title, t.by, t.date, t.wc, t.lexical_diversity, t.avg_word_len, t.reading_time, t.keywords]
-                   )
+        with open(filename, "w", encoding="utf-8") as csvfile:
+            collection_writer = csv.writer(
+                csvfile, quotechar='"', quoting=csv.QUOTE_MINIMAL
+            )
+            headers = [
+                "Title",
+                "Author",
+                "Date",
+                "Text_Type",
+                "Genre",
+                "Wordcount",
+                "LexDiv",
+                "Hapax_Richness",
+                "Avg_Word_Len",
+                "Read_Time",
+                "Keywords",
+            ]
+            collection_writer.writerow(headers)
+            for t in self._members:
+                collection_writer.writerow(
+                    [
+                        t.title,
+                        t.by,
+                        t.date,
+                        t.text_type,
+                        t.genre,
+                        t.token_count,
+                        t.lex_div_maas,
+                        t.hapax_richness,
+                        t.avg_word_len,
+                        t.reading_time,
+                        t.keywords,
+                    ]
+                )

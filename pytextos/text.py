@@ -9,7 +9,10 @@ Issues: tokenization not perfect, how to implement vocabulary, required formatti
 import string
 from statistics import mean  # to calculate avg word length
 from collections import Counter  # for frequency distributions
+from math import sqrt, log
+import re
 from .stopwords import ENGLISH_STOPS, KNOWN_VOCABULARY
+
 
 # Definition of Text class
 class Text:
@@ -18,34 +21,35 @@ class Text:
     checks for keywords and vocabulary against a list of stopwords
     """
 
-    def __init__(self, filename, text_type="Unspecified", genre="Unspecified"):
+    def __init__(self, filename):
         """
         Initializes Text object by providing a .txt filename which is then parsed.
         `text_type` and `genre` are optional parameters which can be updated later.
         """
         self.filename = filename
-        self.text_type = text_type
-        self.genre = genre
 
         # Validating filename argument and raising exceptions.
         if filename.endswith(".txt"):
             try:
-                with open(filename, "r", encoding="utf-8", errors='ignore') as f:
+                with open(filename, "r", encoding="utf-8", errors="ignore") as f:
                     lines = f.readlines()
 
                 self.title = lines[0].strip()
                 self.by = lines[1].strip()
                 self.date = lines[2].strip()
                 self.subtitle = lines[3][1:-2] if lines[3].startswith("*") else None
-                if self.subtitle == None:
-                    self.body = [para for para in lines[3:-2] if para != "\n"]
-                else:
-                    self.body = [para for para in lines[4:-2] if para != "\n"]
-                self.source = lines[-1]
+                self.body = [para for para in lines[3:-2] if para != "\n"]
+                self.text_type = (
+                    lines[-3][1:].strip() if lines[-3].startswith("+") else None
+                )
+                self.genre = (
+                    lines[-2][1:].strip() if lines[-2].startswith("-") else None
+                )
+                self.source = lines[-1].strip()
             except FileNotFoundError:
                 print("File not found in this directory.")
         else:
-            print("There was a problem.")
+            print("The filename doesn't have a txt extension.")
 
     def __repr__(self):
         return f"<Text '{self.title} by {self.by} ({self.date})>"
@@ -60,51 +64,107 @@ class Text:
         """
         Returns a list of word tokens from the body of the text
         """
-        # Remove punctuation and curly quotes with a maketrans() translation table
+        # Remove curly quotes with a maketrans() translation table
         words = []
-        mapping={
-            '"':None,
-            "\u201c":None, 
-            "\u201d":None,
-            "\u2018":None,
-            "\u2019":"'", 
-            "_":None, 
-            "\u2014":" ",
-            ".":None,
-            ",":None,
-            "?":None,
-            "!":None,
-            ":":None,
-            ";":None}
+        mapping = {
+            '"': None,
+            "\u201c": None,
+            "\u201d": None,
+            "\u2018": None,
+            "\u2019": "'",
+            "\u2012": " ",
+            "\u2013": " ",
+            "\u2014": " ",
+            "\u2015": " ",
+            "!": None,
+            "?": None,
+            "#": None,
+            "$": None,
+            "%": None,
+            "&": None,
+            "\\": None,
+            "(": None,
+            ")": None,
+            "*": None,
+            "+": None,
+            ",": None,
+            "-": " ",
+            ".": None,
+            "/": None,
+            ":": None,
+            ";": None,
+            "<": None,
+            "=": None,
+            ">": None,
+            "@": None,
+            "[": None,
+            "]": None,
+            "~": None,
+            "_": None,
+            "`": None,
+            "{": None,
+            "}": None,
+            "0": None,
+            "1": None,
+            "2": None,
+            "3": None,
+            "4": None,
+            "5": None,
+            "6": None,
+            "7": None,
+            "8": None,
+            "9": None,
+        }
         trans_table = str.maketrans(mapping)
         for sent in self.body:
-            clean_sent=sent.translate(trans_table)
-            words.extend([w.strip("' ") for w in clean_sent.split()]) #remove single quotes but not apostrophe
+            clean_sent = sent.translate(trans_table)
+            words.extend(
+                [w.strip("' ").upper() for w in clean_sent.split()]
+            )  # remove single quotes but not apostrophe
         return words
 
     @property
-    def wc(self):
-        """Returns number of words (int)"""
-        return sum(
-            [len(para.split()) for para in self.body]
-        )  # not using tokenize: contractions!
+    def token_count(self):
+        return len(self.tokenize())
+
+    @property
+    def type_count(self):
+        return len(set(self.tokenize()))
 
     @property
     def reading_time(self):
         """Returns reading time in rounded number of minutes (int) """
-        return round(self.wc/265)
+        return round(self.token_count / 265)
 
     @property
     def avg_word_len(self):
-        return round(mean([len(w) for w in self.tokenize()]),2)
+        return round(mean([len(w) for w in self.tokenize()]), 2)
+
+    def lex_div(self, variant="maas"):
+        """Takes type of lexical diversity measurement (ttr, summer, maas) and returns result.
+        """
+        if variant == "ttr":
+            return round(self.type_count / self.token_count, 4)
+        elif variant == "summer":
+            return round(log(log(self.type_count)) / log(log(self.token_count)), 4)
+        elif variant == "maas":
+            return (log(self.token_count) - log(self.type_count)) / (
+                log(self.token_count) ** 2
+            )
 
     @property
-    def lexical_diversity(self):
-        return round(len(set(self.tokenize())) / len(self.tokenize())*100,2)
+    def lex_div_maas(self):
+        return self.lex_div()
+
+    @property
+    def hapax_richness(self):
+        freq = self.freq_dist()
+        hapax = [w for w in freq if freq[w] == 1]
+        return len(hapax) / self.token_count * 100
 
     @property
     def keywords(self):
-        words=[i[0] for i in self.freq_dist().most_common(7)]
+        words = [i[0] for i in self.freq_dist().most_common(7)]
         return " ".join(words)
 
     def freq_dist(self):
