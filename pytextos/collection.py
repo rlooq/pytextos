@@ -16,6 +16,10 @@ class Collection:
             self._members = [Text(f) for f in os.listdir() if f.endswith(".txt")]
         except FileNotFoundError:
             print("Not a valid path.")
+    
+    def print_members(self):
+        for text in self._members:
+            print(f"{self._members.index(text)})".rjust(3), f"{text.title} by {text.by}".ljust(70, "."), f"{text.token_count:,}".rjust(8), "words")
 
     def __repr__(self):
         return f"<Collection: {self.title}>"
@@ -32,7 +36,7 @@ class Collection:
                 csvfile, quotechar='"', quoting=csv.QUOTE_MINIMAL
             )
             headers = [
-                "Title",
+                "File",
                 "Author",
                 "Date",
                 "Text_Type",
@@ -48,7 +52,7 @@ class Collection:
             for t in self._members:
                 collection_writer.writerow(
                     [
-                        t.title,
+                        t.filename,
                         t.by,
                         t.date,
                         t.text_type,

@@ -32,27 +32,27 @@ class Text:
         if filename.endswith(".txt"):
             try:
                 with open(filename, "r", encoding="utf-8", errors="ignore") as f:
-                    lines = f.readlines()
+                    lines = [line.strip() for line in f.readlines() if line!="\n"]
 
-                self.title = lines[0].strip()
-                self.by = lines[1].strip()
-                self.date = lines[2].strip()
+                self.title = lines[0]
+                self.by = lines[1]
+                self.date = lines[2]
                 self.subtitle = lines[3][1:-2] if lines[3].startswith("*") else None
-                self.body = [para for para in lines[3:-2] if para != "\n"]
+                self.body = lines[3:-3]
                 self.text_type = (
-                    lines[-3][1:].strip() if lines[-3].startswith("+") else None
+                    lines[-3][1:] if lines[-3].startswith("+") else None
                 )
                 self.genre = (
-                    lines[-2][1:].strip() if lines[-2].startswith("-") else None
+                    lines[-2][1:] if lines[-2].startswith("-") else None
                 )
-                self.source = lines[-1].strip()
+                self.source = lines[-1]
             except FileNotFoundError:
                 print("File not found in this directory.")
         else:
             print("The filename doesn't have a txt extension.")
 
     def __repr__(self):
-        return f"<Text '{self.title} by {self.by} ({self.date})>"
+        return f"<Text '{self.title} by {self.by}>"
 
     def __getitem__(self, i):
         return self.body[i]
@@ -125,23 +125,26 @@ class Text:
 
     @property
     def token_count(self):
+        """Total number of words, i.e. tokens (int)"""
         return len(self.tokenize())
 
     @property
     def type_count(self):
+        """Number of unique types, i.e. set of tokens (int)"""
         return len(set(self.tokenize()))
 
     @property
     def reading_time(self):
-        """Returns reading time in rounded number of minutes (int) """
+        """Reading time in rounded number of minutes (int) """
         return round(self.token_count / 265)
 
     @property
     def avg_word_len(self):
+        """Average word length in number of characters (int)"""
         return round(mean([len(w) for w in self.tokenize()]), 2)
 
     def lex_div(self, variant="maas"):
-        """Takes type of lexical diversity measurement (ttr, summer, maas) and returns result.
+        """Takes type of lexical diversity measurement (ttr, summer, maas) and returns result (int)
         """
         if variant == "ttr":
             return round(self.type_count / self.token_count, 4)
@@ -154,21 +157,24 @@ class Text:
 
     @property
     def lex_div_maas(self):
+        """ Maas lexical diversity (float)"""
         return self.lex_div()
 
     @property
     def hapax_richness(self):
+        """ Number of hapaxes divided by total number of tokens (float)"""
         freq = self.freq_dist()
         hapax = [w for w in freq if freq[w] == 1]
         return len(hapax) / self.token_count * 100
 
     @property
     def keywords(self):
+        """ Seven most common words separated by space (str)"""
         words = [i[0] for i in self.freq_dist().most_common(7)]
         return " ".join(words)
 
     def freq_dist(self):
-        """Returns a Counter object with word frequencies"""
+        """Returns a Counter object with word frequencies (Counter object)"""
         cnt = Counter()
         for word in self.tokenize():
             if word.lower() not in ENGLISH_STOPS:
@@ -176,16 +182,12 @@ class Text:
         return cnt
 
     def word_freq(self, word):
-        """Returns number of occurrences of a given word, excluding stopwords"""
+        """Returns number of occurrences of a given word, excluding stopwords (int)"""
         freq = self.freq_dist()
         if word.upper() in freq:
-            print(
-                f"The word {word.upper()} appears {freq[word.upper()]} times in this text."
-            )
+            return freq[word.uppwer()]
         else:
-            print(
-                f"The word {word.upper()} is either a stopword or it's not used in this text."
-            )
+            return 0
 
     # At the moment I have to idea how to tackle this one:
     def vocabulary(
@@ -205,6 +207,37 @@ class Text:
                 if word not in (KNOWN_VOCABULARY) and word.isalpha()
             ]
         )
+
+
+# Extract class definition
+class Extract(Text):
+    def __init__(self, parent_text, beginning, end, title="Extract from"):
+        self.parent_text=parent_text
+        self.parent_title=parent_text.title
+        self.title=f"{title} {parent_text.title}"
+        self.by=parent_text.by
+        self.date=parent_text.date
+        self.body=parent_text[beginning:end]
+        self.text_type=parent_text.text_type
+        self.genre=parent_text.genre
+        self.source=parent_text.source
+    
+    def __repr__(self):
+        return f"<Extract from '{self.parent_title}'>"
+
+    def save_to_txt(self):
+        with open(f"{self.title.replace(' ', '_')}.txt", "w") as f:
+            f.write(f"{self.title}\n")
+            f.write(f"{self.by}\n")
+            f.write(f"{self.date}\n\n")
+            for line in self.body:
+                f.write(f"{line}\n")
+            f.write(f"\nSource: {self.source}")
+
+
+
+
+
 
 
 # The problem of tokenizing: here's a dict of contractions in English for possible use
