@@ -1,5 +1,6 @@
 __pycache__
 /tests/*.txt
+.ipynb_checkpoints/*
 .vscode/*
 *.pyc
 _NOTES

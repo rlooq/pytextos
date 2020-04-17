@@ -1,4 +1,4 @@
-ENGLISH_STOPS = [
+ENGLISH_STOPS = set([
     "",
     "'ll",
     "'ve",
@@ -804,15 +804,38 @@ ENGLISH_STOPS = [
     "ye",
     "hast",
     "ere",
-]
+    "thing",
+    "things",
+    "look",
+    "looked",
+    "looks",
+    "say",
+    "said",
+    "saying",
+    "tell",
+    "tells",
+    "told",
+    "left",
+    "right"
+])
 
 
 # VOCABULARY STOPS: COULD HAVE DIFFERENT VARIABLES FOR DIFFERENT LEVELS
 
 
-KNOWN_VOCABULARY = [
+KNOWN_VOCABULARY = set([
     "AA",
+    "AAA",
+    "AAAA",
     "AARON",
+    "ABANDON",
+    "ABDOMEN",
+    "ABDOMINAL",
+    "ABNORMAL",
+    "ABUNDANT",
+    "ABUNDANCE",
+    "ACCUMULATED",
+    "ACCUMULATION",
     "ABILITIES",
     "ABILITY",
     "ABLY",
@@ -11901,4 +11924,4 @@ KNOWN_VOCABULARY = [
     "VISCERAL",
     "WALT",
     "WIDESPREAD",
-]
+])

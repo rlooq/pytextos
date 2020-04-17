@@ -1,25 +1,42 @@
 from pytextos.text import Text
 import os, csv
+from secrets import choice
+
+from tkinter import Tk, filedialog
+
+# Helper function to select collection folder via dialog
+def GetPath():
+    root = Tk()
+    root.withdraw()
+    return filedialog.askdirectory()
 
 
+# Collection class definition
 class Collection:
     """Group of Text Objects to be collected, queried, listed, compared and
-       exported according to different criteria.
+       exported according to different criteria: if no folder is provided in
+       instance's parameters, it will be selected with a dialog.
     """
 
-    def __init__(self, folder, title="Unnamed Collection"):
-        self.folder = folder
+    def __init__(self, folder=None, title="Unnamed Collection"):
+        
         self.title = title
+        if folder:
+            self.folder=folder
+        else:
+            self.folder = GetPath()
         # Validating folder
         try:
-            os.chdir(folder)
-            self._members = [Text(f) for f in os.listdir() if f.endswith(".txt")]
+            os.chdir(self.folder)
+            members= [Text(f) for f in os.listdir() if f.endswith(".txt")]
+            members.sort(key=lambda f:f.token_count, reverse=True)
+            self._members=members 
         except FileNotFoundError:
             print("Not a valid path.")
     
     def print_members(self):
         for text in self._members:
-            print(f"{self._members.index(text)})".rjust(3), f"{text.title} by {text.by}".ljust(70, "."), f"{text.token_count:,}".rjust(8), "words")
+            print(f"{self._members.index(text)})".rjust(3), f"{text.title} - {text.by.split()[-1]}".ljust(76, "."), f"{text.token_count:,}".rjust(7), "words")
 
     def __repr__(self):
         return f"<Collection: {self.title}>"
@@ -65,3 +82,9 @@ class Collection:
                         t.keywords,
                     ]
                 )
+
+
+    def random(self):
+        random_text=choice(self._members)
+        print(choice(random_text.body))
+        print(f"\t{random_text.by}, {random_text.title}")

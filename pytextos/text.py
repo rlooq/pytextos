@@ -170,7 +170,7 @@ class Text:
     @property
     def keywords(self):
         """ Seven most common words separated by space (str)"""
-        words = [i[0] for i in self.freq_dist().most_common(7)]
+        words = [i[0] for i in self.freq_dist().most_common(10)]
         return " ".join(words)
 
     def freq_dist(self):
