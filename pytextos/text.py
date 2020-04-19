@@ -11,6 +11,7 @@ from statistics import mean  # to calculate avg word length
 from collections import Counter  # for frequency distributions
 from math import sqrt, log
 import re
+from secrets import choice
 from .stopwords import ENGLISH_STOPS, KNOWN_VOCABULARY
 
 
@@ -32,13 +33,14 @@ class Text:
         if filename.endswith(".txt"):
             try:
                 with open(filename, "r", encoding="utf-8", errors="ignore") as f:
-                    lines = [line.strip() for line in f.readlines() if line!="\n"]
+                    lines = [line.strip() for line in f.readlines() if not line.startswith("\n")]
 
                 self.title = lines[0]
                 self.by = lines[1]
                 self.date = lines[2]
                 self.subtitle = lines[3][1:-2] if lines[3].startswith("*") else None
                 self.body = lines[3:-3]
+                self.raw_body = " ".join(self.body)
                 self.text_type = (
                     lines[-3][1:] if lines[-3].startswith("+") else None
                 )
@@ -59,6 +61,13 @@ class Text:
 
     def __len__(self):
         return len(self.body)
+
+    def sent_tokenize(self):
+        """
+        Returns list of sentences from raw_body or the text
+        """
+        pattern=r"(?<!\w\.\w.)(?<![A-Z][a-z]\.)(?<=\.|\?)\s"
+        return [s for s in re.split(pattern, self.raw_body) if len(s)>3]
 
     def tokenize(self):
         """
@@ -143,6 +152,13 @@ class Text:
         """Average word length in number of characters (int)"""
         return round(mean([len(w) for w in self.tokenize()]), 2)
 
+    @property
+    def avg_sentence_len(self):
+        """Average sentence length in number of characers (int)"""
+        sentences=self.sent_tokenize()
+        return round(sum(map(len, sentences)) / len(sentences), 2)
+
+
     def lex_div(self, variant="maas"):
         """Takes type of lexical diversity measurement (ttr, summer, maas) and returns result (int)
         """
@@ -188,6 +204,12 @@ class Text:
             return freq[word.uppwer()]
         else:
             return 0
+
+    def random_sent(self):
+        """Returns random senteces from body of text"""
+        return choice(self.sent_tokenize()).strip()
+
+
 
     # At the moment I have to idea how to tackle this one:
     def vocabulary(

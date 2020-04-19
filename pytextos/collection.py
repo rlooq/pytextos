@@ -1,6 +1,7 @@
 from pytextos.text import Text
 import os, csv
 from secrets import choice
+import re
 
 from tkinter import Tk, filedialog
 
@@ -62,6 +63,7 @@ class Collection:
                 "LexDiv",
                 "Hapax_Richness",
                 "Avg_Word_Len",
+                "Avg_Sent_Len",
                 "Read_Time",
                 "Keywords",
             ]
@@ -78,6 +80,7 @@ class Collection:
                         t.lex_div_maas,
                         t.hapax_richness,
                         t.avg_word_len,
+                        t.avg_sentence_len,
                         t.reading_time,
                         t.keywords,
                     ]
@@ -86,5 +89,11 @@ class Collection:
 
     def random(self):
         random_text=choice(self._members)
-        print(choice(random_text.body))
-        print(f"\t{random_text.by}, {random_text.title}")
+        random_line=random_text.random_sent()
+        if len(random_line)>8:
+            return (f"{random_text.random_sent()}\n\t--{random_text.by}, {random_text.title}.\n")
+        else:
+            print("Try again.")
+
+    def print_random(self):
+        print(self.random())    
